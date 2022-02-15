@@ -25,4 +25,4 @@ json_data = json.loads(r.text)
 
 df_data = json_data['data']['search']['nodes']
 df = pd.DataFrame(df_data)
-df.to_excel("q2.xlsx")
+df.to_excel("Q2/q2.xlsx")

@@ -1,7 +1,7 @@
 import requests
 import json
 import pandas as pd
-import key
+import key as key
 
 query = """query {
   search(query: "stars:>1", type: REPOSITORY, first: 100) {

@@ -41,12 +41,24 @@ query = """{
   }
 }"""
 
-  # total: issues {
-  #         totalCount
-  #       }
-  #       closed: issues(states: CLOSED) {
-  #         totalCount
-  #       }
+#  This query is used to get total and closed issues. First 40 so that the API doesn't break.
+# 
+# query = """{
+#   search(query: "stars:>100", type: REPOSITORY, first: 40) {
+#     nodes {
+#       ... on Repository {
+#           total: issues {
+#           totalCount
+#         }
+#         closed: issues(states: CLOSED) {
+#           totalCount
+#         }
+#       }
+#     }
+#   }
+# }"""
+
+
 
 result = run_query(query)
 results= result["data"]["search"]["nodes"]

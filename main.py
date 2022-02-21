@@ -41,25 +41,6 @@ query = """{
   }
 }"""
 
-#  This query is used to get total and closed issues. First 40 so that the API doesn't break.
-# 
-# query = """{
-#   search(query: "stars:>100", type: REPOSITORY, first: 40) {
-#     nodes {
-#       ... on Repository {
-#           total: issues {
-#           totalCount
-#         }
-#         closed: issues(states: CLOSED) {
-#           totalCount
-#         }
-#       }
-#     }
-#   }
-# }"""
-
-
-
 result = run_query(query)
 results= result["data"]["search"]["nodes"]
 data = []
@@ -77,8 +58,6 @@ def save_file():
     updated_at =  datetime.strptime(r["updatedAt"], "%Y-%m-%dT%H:%M:%SZ")
     updated_minutes = today_minutes - updated_at
     updated = math.modf(updated_minutes.seconds / 60)[1]
-    # closed_issues = r["closed"]["totalCount"]
-    # total_issues = r["total"]["totalCount"]
     data.append([name, age, total_pull_requests, total_releases, updated, primary_language])
 
   columns = ["Name", "Age", "Total Pull Requests", "Total Releases", "Updated", "Primary Language"]

@@ -4,23 +4,18 @@ import requests
 from datetime import datetime
 from datetime import date
 
-from sqlalchemy import column
-
-
 token = input("Entre com seu token: ")
 
 headers = {"Authorization": f"Bearer {token}"}
 
-
-def run_query(query):
-    request = requests.post('https://api.github.com/graphql', json={'query': query}, headers=headers)
-    if request.status_code == 200:
-        return request.json()
-    else:
-        raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
-
-query = """{
-  search(query: "stars:>100", type: REPOSITORY, first: 100) {
+def run_query(cursor):
+  f_cursor = "null" if cursor is None else "\"" + cursor + "\""
+  query = """{
+  search(query: "stars:>100", type: REPOSITORY, first: 20) {
+    pageInfo {
+        endCursor
+        hasNextPage
+    } 
     nodes {
       ... on Repository {
         nameWithOwner
@@ -36,16 +31,27 @@ query = """{
           totalCount
         }
         updatedAt
+        total: issues {
+          totalCount
+        }
+        closed: issues(states: CLOSED) {
+          totalCount
+        }
       }
     }
   }
-}"""
+}
+"""
+  request = requests.post('https://api.github.com/graphql', json={'query': query}, headers=headers)
+  if request.status_code == 200:
+      return request.json()
+  else:
+      raise Exception("Query failed to run by returning code of {}. {}".format(request.status_code, query))
 
-result = run_query(query)
-results= result["data"]["search"]["nodes"]
 data = []
 
-def save_file():
+def save_file(result):
+  results = result["data"]["search"]["nodes"]
   for r in results:
     name = r["nameWithOwner"]
     today = date.today()
@@ -58,10 +64,22 @@ def save_file():
     updated_at =  datetime.strptime(r["updatedAt"], "%Y-%m-%dT%H:%M:%SZ")
     updated_minutes = today_minutes - updated_at
     updated = math.modf(updated_minutes.seconds / 60)[1]
-    data.append([name, age, total_pull_requests, total_releases, updated, primary_language])
+    closed_issues = r["closed"]["totalCount"]
+    total_issues = r["total"]["totalCount"]
+    data.append([name, age, total_pull_requests, total_releases, updated, primary_language, closed_issues, total_issues])
 
-  columns = ["Name", "Age", "Total Pull Requests", "Total Releases", "Updated", "Primary Language"]
+  columns = ["Name", "Age", "Total Pull Requests", "Total Releases", "Updated", "Primary Language", "Closed Issues", "Total Issues"]
   df = pd.DataFrame(data, columns=columns) 
   df.to_excel("repositorios_populares.xlsx")
 
-save_file()
+pages = 50
+endCursor = None
+
+for page in range(pages):
+  result = run_query(endCursor)
+  save_file(result)
+  has_next = result["data"]["search"]["pageInfo"]["hasNextPage"]
+  if not has_next:
+      break
+  endCursor = result["data"]["search"]["pageInfo"]["endCursor"]
+

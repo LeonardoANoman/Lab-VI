@@ -11,7 +11,7 @@ headers = {"Authorization": f"Bearer {token}"}
 def run_query(cursor):
   f_cursor = "null" if cursor is None else "\"" + cursor + "\""
   query = """{
-  search(query: "stars:>100", type: REPOSITORY, first: 20) {
+  search(query: "stars:>100", type: REPOSITORY, first: 20, after:""" + f_cursor + """) {
     pageInfo {
         endCursor
         hasNextPage
@@ -51,6 +51,7 @@ def run_query(cursor):
 data = []
 
 def save_file(result):
+  print(result)
   results = result["data"]["search"]["nodes"]
   for r in results:
     name = r["nameWithOwner"]
@@ -71,6 +72,7 @@ def save_file(result):
   columns = ["Name", "Age", "Total Pull Requests", "Total Releases", "Updated", "Primary Language", "Closed Issues", "Total Issues"]
   df = pd.DataFrame(data, columns=columns) 
   df.to_excel("repositorios_populares.xlsx")
+  df.to_csv("repositorios_populares.csv")
 
 pages = 50
 endCursor = None
